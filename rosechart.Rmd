@@ -1,0 +1,120 @@
+---
+title: "Nightingale's Rose Chart (Daniel Posmik)"
+author: "Daniel Posmik"
+date: "10/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Strengths of the Visualization
+
+This visualization's strengths are (i) its ability to visualize a trend over time, and (ii) illustrate the proportions of the causes. Despite limited space, two years are visualized with ample detail. Moreover, there are little to no confusing/irrelevant details. 
+
+
+## 2. Replication
+### 2.1 Setup
+
+First, I set up R by loading the data and tidyverse package. 
+
+```{r, message=FALSE}
+#load("Nightingale.RData")
+library(tidyverse)
+library(knitr)
+library(HistData)
+library(magrittr)
+library(grid)
+library(gridExtra)
+```
+
+### 2.2 Data Wrangling
+
+Second, I wrangle the data and proceed to replicate the visualization using the capabilities of ggplot. 
+
+```{r, message=FALSE}
+df <-Nightingale %>% select(Date, Month, Year, contains("rate")) %>%
+  pivot_longer(cols = 4:6, names_to = "Cause", values_to = "Rate")
+
+df
+```
+
+```{r, message=FALSE}
+df2=filter(df,Cause=="Disease.rate")
+Dates = df[df$Date >= "1854-04-01" & df$Date <= "1855-03-31",]
+Dates2 = filter(Dates,Cause=="Disease.rate")
+Dates3 = df[df$Date >= "1855-04-01" & df$Date <= "1856-03-31",]
+Dates4 = filter(Dates3,Cause=="Disease.rate")
+```
+
+### 2.3 Data Visualization
+
+```{r}
+viz1 <- ggplot(Dates, aes(x = Month, y = Rate, fill = factor(Cause)))+
+  geom_bar( width = 1,stat = "identity", position = "identity", color = "grey48", alpha=0.8)+
+  coord_polar(start = -pi) + 
+  scale_fill_manual(name = "Causes", values = c("skyblue3", "grey30", "firebrick"),
+                    labels = c("Disease", "Other", "Wounds")) +
+  theme_void() +
+  scale_y_sqrt() +
+  theme(plot.margin=unit(c(1,1,1,0), "cm")) +
+  ggtitle("1. April 1854 to March 1855") +
+  theme(axis.text.x = element_text(size = 9),
+         strip.text = element_text(size = 11),
+         legend.position = "none",
+         plot.margin = unit(c(10, 10, 10, 10), "pt"),
+         text = element_text(family = "serif"))
+ 
+viz2 <- ggplot(Dates3, aes(x = Month, y = Rate, fill = factor(Cause))) +
+  geom_bar( width = 1,stat = "identity", position = "identity", color = "grey48", alpha=0.8) +
+  coord_polar(start = -pi) + 
+  scale_fill_manual(values = c("skyblue3", "grey30", "firebrick")) +
+  theme_void() +
+  scale_y_sqrt() +
+  theme(legend.title = element_blank()) + 
+  theme(legend.position = "none",
+        plot.margin=unit(c(1,0,1,1), "cm")) +
+  ggtitle("2. April 1855 to March 1856") +
+  theme(axis.text.x = element_text(size = 9),
+         strip.text = element_text(size = 11),
+         legend.position = "none",
+         plot.margin = unit(c(10, 10, 10, 10), "pt"),
+         text = element_text(family = "serif"))
+ 
+grid.arrange(viz2,viz1,ncol=2,heights=c(4,1),widths=c(3,5),
+         top = textGrob("Diagram of the Causes of Mortality \n in the Army in the East")) 
+```
+
+## 3. Weaknesses
+
+The main weakness of the visualization are that (i) the polar coordinates are harder to interpret when compared to a time series chart in a cartesian coordinate field. Moreover, (ii) the outer regions are given too much emphasis due to the increased area - by nature of the polar coordinates. Lastly, (iii) it is hard to connect both years together and may intuitively lead someone to consider them as independent visualizations. 
+
+## 4. Improved Visualization
+
+First, I introduce the same time series data into a cartesian coordinate field that spans an equal time frame. Second, I produce a bar chart that communicates both (i) overall trend, the (ii) proportion at any given moment of time, and (iii) the absolute values at any given moment of time for any series. 
+
+Moreover, we can use geom_vline and annotations to communicate the cutoff that Nightingale chose. 
+
+```{r}
+#Data Wrangling
+Nightingale %>% 
+  select(Date, Month, Year, contains("rate")) %>% 
+  pivot_longer(cols = 4:6, names_to = "Cause", values_to = "Rate") %>% 
+#Visualization
+ggplot(aes(x=Date, y=Rate, fill=Cause)) + 
+    geom_bar(position = "dodge", stat = "identity", color = "grey48") +
+    labs(title= "Diagram of the Causes of Mortality in the Army in the East") +
+    scale_fill_manual(values = c("skyblue3", "grey30", "firebrick")) +
+    theme_light() +
+    labs(x="Date", y= "Deaths") +
+    geom_vline(xintercept=as.Date("1855-03-30"), linetype="dotdash", alpha = 0.7) +
+    annotate("text", x = as.Date("1854-07-01"), y = 750, 
+             label = "1.\n April 1854 to March 1855",
+             alpha = 0.7) +
+    annotate("text", x = as.Date("1855-11-01"), y = 750, 
+             label = "2.\n April 1855 to March 1856",
+             alpha = 0.7)
+```
+
+
