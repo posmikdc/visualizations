@@ -1,0 +1,88 @@
+---
+title: "Hans Rosling's Human Development Plot (Daniel Posmik)"
+author: "Daniel Posmik"
+date: "10/16/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## R Setup
+
+```{r, message = FALSE}
+#install.packages("gapminder")
+library(gapminder)
+library(ggplot2)
+```
+
+First, let us look at the visualization for the years 1952 - 2007.
+``` {r, message = FALSE}
+#install.packages("plotly")
+library(plotly) #We load and install the plotly package
+
+g <- crosstalk::SharedData$new(gapminder, ~continent) #Creates slider widget
+
+gg <- ggplot(g, aes(gdpPercap, lifeExp, color = continent, frame = year)) +
+  #gdpPercap is on the x-axis and lifeExp is on the y-axis; color represents continent
+  geom_point(aes(size = pop, ids = country)) + 
+  #size of bubbles represents population by country
+  #geom_smooth(se = FALSE, method = "lm") + #this is an optional smoothing line
+  scale_x_log10() #this represents the log scale
+
+ggplotly(gg) %>% 
+  highlight("plotly_hover")
+```
+We can see that the plot is very similar to the one on the website. However, now we need to rename the axes.
+
+Since I have already visualized "at least three years" (per the instructions), I decide against further limiting the time frame of this visualization for simplicity. 
+
+``` {r, message = FALSE}
+#install.packages("scales")
+library(scales)
+
+g <- crosstalk::SharedData$new(gapminder, ~continent) #Creates slider widget
+
+gg <- ggplot(g, aes(gdpPercap, lifeExp, color = continent, frame = year)) +
+  #gdpPercap is on the x-axis and lifeExp is on the y-axis; color represents continent
+  geom_point(aes(size = pop, ids = country)) + 
+  #size of bubbles represents population by country
+  #geom_smooth(se = FALSE, method = "lm") + #this is an optional smoothing line
+  scale_x_log10() + #this represents the log scale
+  labs(x="Income") + #Rename x-axis using scales package
+  labs(y="Life Expectancy") #Rename y-axis using scales package
+
+ggplotly(gg) %>% 
+  highlight("plotly_hover")
+```
+Finally, we adjust the visuals to fit the example as closely as possible. 
+
+``` {r, message = FALSE}
+#install.packages("scales")
+library(scales)
+
+g <- crosstalk::SharedData$new(gapminder, ~continent) #Creates slider widget
+ 
+gg <- ggplot(g, aes(gdpPercap, lifeExp, color = continent, frame = year)) +
+  #gdpPercap is on the x-axis and lifeExp is on the y-axis; color represents continent
+  geom_point(aes(size = pop, ids = country)) + 
+  #size of bubbles represents population by country
+  #geom_smooth(se = FALSE, method = "lm") + #this is an optional smoothing line
+  labs(x = "Income",
+    y = "Life Expectancy",
+    color = "grey",
+    title = "Income Level 1 <> Level 2 <> Level 3 <> Level 4") +
+  scale_y_continuous( breaks = c(10, 20, 30, 40, 50, 60, 70, 80, 90) ) + 
+  scale_x_log10( breaks = c(500, 1000, 2000, 4000, 8000, 16000, 32,000, 64000, 128000) ) +
+  theme_classic() +
+  scale_fill_manual( breaks = c("Asia","Africa","Americas","Europe","Oceania") , 
+                      values = c("pink","cyan","chartreuse1","gold","firebrick1") ) +
+  theme(plot.background = element_blank() ) +
+  annotate("text", x = 5000, y = 50, label = "YEARS 1952 - 2007",
+             hjust=15, vjust=15, col="black",
+             fontface = "bold", alpha = 0.5)
+
+ggplotly(gg) %>% 
+   highlight("plotly_hover")
+
+```
+Author: Daniel Posmik (posmikdc@mail.uc.edu)
